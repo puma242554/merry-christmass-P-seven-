@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>🎄 Christmas Surprise 🎄</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Itim&display=swap');
+
+html, body {
+  margin:0; padding:0; width:100%; height:100%;
+  overflow:hidden;
+  font-family:'Itim', cursive;
+  background: radial-gradient(circle at top,#081c15,#020d08);
+  color:white;
+}
+canvas {position:fixed; top:0; left:0; z-index:0;}
+.center {
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  z-index:5; width:90%; max-width:420px; text-align:center;
+}
+.box {
+  background:rgba(0,0,0,.7);
+  border-radius:22px;
+  padding:25px;
+  box-shadow:0 0 30px rgba(0,255,200,.5);
+}
+.glow {
+  font-family:'Orbitron';
+  font-size:26px;
+  text-shadow:0 0 10px #00ffd5,0 0 30px #00ffaa;
+}
+button {
+  margin-top:15px;
+  padding:12px 24px;
+  border:none; border-radius:30px;
+  font-size:18px;
+  background:linear-gradient(45deg,#ff4d6d,#ffb703);
+  color:white; cursor:pointer;
+}
+.layer {display:none; margin-top:20px; animation:slideUp 0.8s ease forwards;}
+@keyframes slideUp {from{opacity:0; transform:translateY(40px);} to{opacity:1; transform:translateY(0);}}
+
+/* หัวใจและดาวใหญ่ขึ้น กดง่าย */
+.floatHeart, .shootStar, .cuteEmoji {
+  position:fixed; cursor:pointer; user-select:none; z-index:10;
+  width:60px; height:60px; display:flex; align-items:center; justify-content:center;
+}
+.floatHeart {font-size:50px; animation:floatUp 4s linear forwards;}
+@keyframes floatUp {from{bottom:0;opacity:1} to{bottom:100%;opacity:0}}
+.shootStar {font-size:40px; animation:shoot 3s linear forwards;}
+@keyframes shoot {from{transform:translate(0,0)} to{transform:translate(-400px,400px);opacity:0}}
+.cuteEmoji {font-size:40px; animation:floatEmoji 5s linear forwards;}
+@keyframes floatEmoji {from{bottom:0;opacity:1} to{bottom:100%;opacity:0}}
+
+.counter {margin-top:10px;font-size:18px;}
+.secret {font-size:20px; margin-top:20px; text-shadow:0 0 15px #ff9df5;}
+.swipeHint {margin-top:25px; padding:15px; border-radius:15px; background:rgba(255,255,255,.1); box-shadow:0 0 15px rgba(255,150,200,.6);}
+.hiddenSecret {display:none; margin-top:25px; font-size:22px; color:#ffe6ff; text-shadow:0 0 20px #ff7bd5;}
+#endMessage {display:none; font-size:28px; color:#ffef96; text-shadow:0 0 15px #ff6fd8; margin-top:20px;}
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<canvas id="fire"></canvas>
+
+<audio id="clickS" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+<audio id="unlockS" src="https://assets.mixkit.co/active_storage/sfx/2068/2068-preview.mp3"></audio>
+<audio id="boomS" src="https://assets.mixkit.co/active_storage/sfx/1430/1430-preview.mp3"></audio>
+
+<div class="center">
+  <div class="box" id="lock">
+    <div class="glow">🎁 Christmas Lock 🎁</div>
+    <p>กรอกรหัสผ่านหน่อยย</p>
+    <input id="pass" maxlength="6" type="password">
+    <button onclick="unlock()">เปิดของขวัญเลยย</button>
+  </div>
+
+  <div class="box" id="content" style="display:none">
+    <div class="layer" id="l1">
+      🎄 ชั้น 1: สุขสันต์วันคริสต์มาสน้าา 🎄<br>
+      คริสต์มาสนี้หนูไม่ได้ขออะไรเลย เพราะสิ่งที่อยากได้…กำลังอ่านอยู่นี่แหละ อ้ะล้อเล่น555
+      <br><button onclick="showLayer(2)">➡️ เปิดชั้นถัดไป</button>
+    </div>
+    <div class="layer" id="l2">
+      💖 ชั้น 2: ขอให้ทุกวันที่เหลือของปีนี้ <br>
+      มีความสุขมากขึ้นเรื่อยๆและหวังว่าหนูจะได้เป็นหนึ่งในความสุขของพี่ด้วยนะ💕💖✨
+      <br><button onclick="showLayer(3)">➡️ เปิดชั้นถัดไป</button>
+    </div>
+    <div class="layer" id="l3">
+      🌟 ชั้น 3: ขอให้ของขวัญทุกชิ้นที่พี่ได้รับ สู้ความสุขที่หนูขอให้พี่ไม่ได้เลย <br>
+      เพราะสิ่งที่หนูอยากให้มากที่สุด คือรอยยิ้มของพี่😊
+      <br><button onclick="showLayer(4)">➡️ เปิดชั้นถัดไป</button>
+    </div>
+    <div class="layer" id="l4">
+      🎁 ชั้น 4: พร้อมสนุกกับเกมก่อนข้อความลับรึยาง
+      <br><button onclick="startHeartGame()">💖 เริ่มเกมหัวใจ</button>
+    </div>
+
+    <div class="layer" id="heartGame">
+      คลิกเก็บหัวใจให้ครบ 5
+      <div class="counter">💖 <span id="heartCount">0</span>/5</div>
+    </div>
+
+    <div class="layer" id="starGame">
+      คลิกดาวให้ครบ 7
+      <div class="counter">🌟 <span id="starCount">0</span>/7</div>
+    </div>
+
+    <div class="layer" id="secretLayer">
+      <div class="secret">
+        🔐 ข้อความลับ ชั้นที่ 1<br><br>
+        “55555พอๆเลี่ยนมาเยอะละ ขอบคุณที่รับเเอดไอจี เเละ คุยด้วยกัน ฮ็อปป เขินอ่ะ เกิดมาไม่เคยทำอะไรเเบบนี้เลยย มีความสุขมากน้า สุดท้าย ลูเยิฟ เลิฟยูนะค้าา🎁✨”
+      </div>
+      <div class="swipeHint" id="swipeBox">
+        ⬆️ ลาก / ปัดขึ้น เพื่อเปิดความลับชั้นสุดท้าย
+      </div>
+      <div class="hiddenSecret" id="finalSecret">
+        💖 ข้อความลับ ชั้น 2 💖<br><br>
+        “สุดท้ายจริงๆละ หนูอยากให้พี่รู้ว่า มุกเสี่ยวคิดไม่ทัน พี่คิดถึงหนูตอนเล่มมุกเเล้วกัน เพื่อจะได้เสียวอีก✨✨🎄✨”
+      </div>
+    </div>
+
+    <div id="endMessage" class="layer">🎉 ENDDing 🎉</div>
+  </div>
+</div>
+
+<script>
+// เสียง
+const clickS = document.getElementById("clickS");
+const unlockS = document.getElementById("unlockS");
+const boomS = document.getElementById("boomS");
+const click = () => { clickS.currentTime = 0; clickS.play(); };
+const unlockSound = () => unlockS.play();
+const boomSound = () => boomS.play();
+
+// นับหัวใจ/ดาว
+let heart=0, star=0;
+const heartCount = document.getElementById("heartCount");
+const starCount = document.getElementById("starCount");
+
+// รหัสผ่าน
+function unlock(){
+  const passVal = document.getElementById("pass").value;
+  if(passVal==="240654"){
+    unlockSound();
+    document.getElementById("lock").style.display="none";
+    document.getElementById("content").style.display="block";
+    document.getElementById("l1").style.display="block";
+  } else alert("รหัสไม่ถูก 🎅");
+}
+
+function showLayer(n){
+  document.getElementById("l"+n).style.display="block";
+}
+
+// ตัวแปร Interval เก็บเพื่อหยุด
+let heartInterval, starInterval, emojiInterval;
+
+// เกมหัวใจ
+function startHeartGame(){
+  document.getElementById("l4").style.display="none";
+  const game = document.getElementById("heartGame");
+  game.style.display="block";
+
+  heartInterval = setInterval(()=>{
+    const h = document.createElement("div");
+    h.className="floatHeart";
+    h.innerText="💖";
+    h.style.left=Math.random()*90+"%";
+    document.body.appendChild(h);
+
+    h.onclick = ()=>{
+      click();
+      heart++; heartCount.innerText = heart;
+      h.remove();
+      if(heart>=5){ clearInterval(heartInterval); startStarGame(); }
+    };
+
+    setTimeout(()=>h.remove(),7000);
+  },500);
+}
+
+// เกมดาว
+function startStarGame(){
+  document.getElementById("heartGame").style.display="none";
+  const game = document.getElementById("starGame");
+  game.style.display="block";
+
+  starInterval = setInterval(()=>{
+    const s = document.createElement("div");
+    s.className="shootStar"; s.innerText="🌠";
+    s.style.right="-50px";
+    s.style.top=Math.random()*50+"%";
+    document.body.appendChild(s);
+
+    s.onclick = ()=>{
+      click();
+      star++; starCount.innerText = star;
+      s.remove();
+      if(star>=7){
+        clearInterval(starInterval);
+        showSecret();
+      }
+    };
+
+    setTimeout(()=>s.remove(),5000);
+  },800);
+}
+
+// ข้อความลับ + END
+function showSecret(){
+  document.getElementById("starGame").style.display="none";
+  document.getElementById("secretLayer").style.display="block";
+  startHeartFireworks();
+  boomSound();
+
+  // อิโมจิลอยขึ้น
+  let emojis = ["💖","🥰","😘"];
+  emojiInterval = setInterval(()=>{
+    const e = document.createElement("div");
+    e.className="cuteEmoji";
+    e.innerText = emojis[Math.floor(Math.random()*emojis.length)];
+    e.style.left = Math.random()*90+"%";
+    document.body.appendChild(e);
+    setTimeout(()=>e.remove(),6000);
+  },400);
+
+  // แสดงข้อความ END หลัง 5 วินาที
+  setTimeout(()=>{
+    document.getElementById("endMessage").style.display="block";
+    // หยุดอิโมจิและพลุทั้งหมด
+    clearInterval(emojiInterval);
+    hearts = []; // ลบหัวใจระเบิดค้าง
+  },5000);
+}
+
+// ดาวพื้นหลัง
+const bgc = document.getElementById("bg"), ctx = bgc.getContext("2d");
+function resizeBg(){ bgc.width=innerWidth; bgc.height=innerHeight; }
+resizeBg(); window.onresize=resizeBg;
+
+let dots=[...Array(80)].map(()=>({x:Math.random()*bgc.width, y:Math.random()*bgc.height}));
+(function drawBg(){
+  ctx.clearRect(0,0,bgc.width,bgc.height);
+  ctx.fillStyle="white";
+  dots.forEach(d=>{
+    ctx.fillRect(d.x,d.y,2,2);
+    d.y+=1; if(d.y>bgc.height) d.y=0;
+  });
+  requestAnimationFrame(drawBg);
+})();
+
+// เอฟเฟกต์หัวใจระเบิด
+const fc=document.getElementById("fire"), fctx=fc.getContext("2d");
+fc.width=innerWidth; fc.height=innerHeight;
+let hearts=[];
+function heartShape(t){ return {x:16*Math.pow(Math.sin(t),3), y:-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))}; }
+function startHeartFireworks(){
+  setInterval(()=>{
+    const cx=Math.random()*fc.width;
+    const cy=Math.random()*fc.height/2;
+    for(let t=0; t<Math.PI*2; t+=0.15){
+      const p=heartShape(t);
+      hearts.push({x:cx, y:cy, vx:p.x, vy:p.y, a:1, c:`hsl(${Math.random()*360},100%,60%)`});
+    }
+  },600);
+}
+(function drawFire(){
+  fctx.clearRect(0,0,fc.width,fc.height);
+  hearts.forEach(h=>{
+    h.x+=h.vx; h.y+=h.vy; h.a-=0.01;
+    fctx.fillStyle=h.c; fctx.globalAlpha=h.a;
+    fctx.fillRect(h.x,h.y,2,2);
+  });
+  hearts=hearts.filter(h=>h.a>0);
+  fctx.globalAlpha=1;
+  requestAnimationFrame(drawFire);
+})();
+
+// ปัด / ลากเปิดข้อความลับชั้น 2
+let startY=0;
+const swipeBox = document.getElementById("swipeBox");
+const finalSecret = document.getElementById("finalSecret");
+swipeBox.addEventListener("touchstart",e=>startY=e.touches[0].clientY);
+swipeBox.addEventListener("touchend",e=>{
+  if(startY - e.changedTouches[0].clientY > 60) finalSecret.style.display="block";
+});
+swipeBox.addEventListener("mousedown",e=>startY=e.clientY);
+swipeBox.addEventListener("mouseup",e=>{
+  if(startY - e.clientY > 60) finalSecret.style.display="block";
+});
+</script>
+
+</body>
+</html>
